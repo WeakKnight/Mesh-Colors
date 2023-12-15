@@ -1,2 +1,2 @@
 # Mesh-Colors
-implementation of the paper "Mesh Color"
+implementation of the paper "Mesh Colors"
