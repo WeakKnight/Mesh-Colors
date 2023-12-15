@@ -1,5 +1,5 @@
 # Mesh-Colors
-implementation of the paper ["Mesh Colors"](http://www.cemyuksel.com/research/meshcolors/)
+implementation of the paper ["Mesh Colors"](http://www.cemyuksel.com/research/meshcolors/) in Unity 2022
 
 ![image](https://github.com/WeakKnight/Mesh-Colors/assets/12985760/2d60347f-98f9-4fba-9c99-f54efa518b42)
 
