@@ -1,2 +1,2 @@
 # Mesh-Color
-unity implementation of the paper "Mesh Color"
+implementation of the paper "Mesh Color"
