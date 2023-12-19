@@ -2,7 +2,7 @@
 #define MESH_COLOR_TEST_CGINC
 
 #include "UnityCG.cginc"
-#include "MeshColor.cginc"
+#include "MeshColors.cginc"
 
 struct appdata
 {
@@ -50,13 +50,13 @@ float3 sRGBToLinear(float3 srgb)
 
 float4 frag(v2f vertexInput, uint primitiveIndex: SV_PrimitiveID, float3 vBaryWeights: SV_Barycentrics) : SV_Target
 {
-    MeshColor_MetaInfo metaInfo = MeshColor_LoadMetaInfo(primitiveIndex);
+    MeshColors_MetaInfo metaInfo = MeshColors_LoadMetaInfo(primitiveIndex);
     
-    uint2 ij = MeshColor_B(vBaryWeights, metaInfo.resolution).xy;
+    uint2 ij = MeshColors_B(vBaryWeights, metaInfo.resolution).xy;
     uint i = ij.x;
     uint j = ij.y;
 
-    float4 col = MeshColor_Sample(primitiveIndex, vBaryWeights);
+    float4 col = MeshColors_Sample(primitiveIndex, vBaryWeights);
     col.xyz = sRGBToLinear(col.xyz);
 
     return col;

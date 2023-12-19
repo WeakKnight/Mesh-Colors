@@ -1,4 +1,4 @@
-Shader "Unlit/MeshColorTest"
+Shader "Unlit/MeshColorsTest"
 {
     Properties
     {
@@ -18,7 +18,7 @@ Shader "Unlit/MeshColorTest"
             #pragma vertex vert
             #pragma fragment frag
 
-            #include "MeshColorTest.cginc"
+            #include "MeshColorsTest.cginc"
 
             ENDCG
         }

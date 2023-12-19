@@ -7,11 +7,11 @@ using Unity.Collections;
 using System;
 
 [RequireComponent(typeof(MeshRenderer)), ExecuteInEditMode]
-public class MeshColorRendererData : MonoBehaviour
+public class MeshColorsRendererData : MonoBehaviour
 {
     public Texture2D testTexture;
 
-    MeshColor meshColor;
+    MeshColors meshColors;
 
     void OnEnable()
     {
@@ -21,20 +21,20 @@ public class MeshColorRendererData : MonoBehaviour
             return;
         }
 
-        if (meshColor != null)
+        if (meshColors != null)
         {
-            meshColor.Dispose();
+            meshColors.Dispose();
         }
-        meshColor = new MeshColor(transform, mf.sharedMesh, 256);
-        meshColor.ReadDataFromTexture(testTexture);
+        meshColors = new MeshColors(transform, mf.sharedMesh, 256);
+        meshColors.ReadDataFromTexture(testTexture);
 
         MeshRenderer mr = GetComponent<MeshRenderer>();
-        mr.SetPropertyBlock(meshColor.PropertyBlock);
+        mr.SetPropertyBlock(meshColors.PropertyBlock);
     }
 
     void OnDisable()
     {
-        meshColor?.Dispose();
-        meshColor = null;
+        meshColors?.Dispose();
+        meshColors = null;
     }
 }

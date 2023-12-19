@@ -6,9 +6,9 @@ using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 
-public class MeshColor : IDisposable
+public class MeshColors : IDisposable
 {
-    public MeshColor(Transform transform, Mesh mesh, float colorsPerUnit = 64.0f)
+    public MeshColors(Transform transform, Mesh mesh, float colorsPerUnit = 64.0f)
     {
         SharedMesh = mesh;
 
@@ -19,7 +19,7 @@ public class MeshColor : IDisposable
         int baseAddress = 0;
 
         MetaBuffer = new ComputeBuffer(triCount, 2 * 4, ComputeBufferType.Structured | ComputeBufferType.Raw, ComputeBufferMode.SubUpdates);
-        MetaBuffer.name = "Mesh Color Meta Buffer";
+        MetaBuffer.name = "Mesh Colors Meta Buffer";
 
         NativeArray<MetaInfo> metaInfos = MetaBuffer.BeginWrite<MetaInfo>(0, triCount);
 
@@ -46,11 +46,11 @@ public class MeshColor : IDisposable
         MetaBuffer.EndWrite<MetaInfo>(triCount);
 
         PatchBuffer = new ComputeBuffer(baseAddress, 4, ComputeBufferType.Structured | ComputeBufferType.Raw, ComputeBufferMode.SubUpdates);
-        PatchBuffer.name = "Mesh Color Patch Buffer";
+        PatchBuffer.name = "Mesh Colors Patch Buffer";
 
         PropertyBlock = new();
-        PropertyBlock.SetBuffer(Props.MeshColor_PatchBuffer, PatchBuffer);
-        PropertyBlock.SetBuffer(Props.MeshColor_MetaBuffer, MetaBuffer);
+        PropertyBlock.SetBuffer(Props.MeshColors_PatchBuffer, PatchBuffer);
+        PropertyBlock.SetBuffer(Props.MeshColors_MetaBuffer, MetaBuffer);
     }
 
     public void ReadDataFromTexture(Texture2D texture)
@@ -161,7 +161,7 @@ public class MeshColor : IDisposable
 
     static class Props
     {
-        public static int MeshColor_PatchBuffer = Shader.PropertyToID("_MeshColor_PatchBuffer");
-        public static int MeshColor_MetaBuffer = Shader.PropertyToID("_MeshColor_MetaBuffer");
+        public static int MeshColors_PatchBuffer = Shader.PropertyToID("_MeshColors_PatchBuffer");
+        public static int MeshColors_MetaBuffer = Shader.PropertyToID("_MeshColors_MetaBuffer");
     }
 }
