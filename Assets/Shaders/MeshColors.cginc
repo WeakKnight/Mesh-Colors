@@ -3,11 +3,18 @@
 
 StructuredBuffer<uint> _MeshColors_PatchBuffer;
 StructuredBuffer<uint2> _MeshColors_MetaBuffer;
+ByteAddressBuffer _MeshColors_AdjacencyInfoBuffer;
 
 struct MeshColors_MetaInfo
 {
     uint address;
     uint resolution;
+};
+
+struct MeshColors_AdjacencyInfo
+{
+    uint3 TriangleIndices;
+    uint3 LocalEdgeIndices;
 };
 
 MeshColors_MetaInfo MeshColors_LoadMetaInfo(uint primitiveIndex)
@@ -16,6 +23,14 @@ MeshColors_MetaInfo MeshColors_LoadMetaInfo(uint primitiveIndex)
     metaInfo.address = _MeshColors_MetaBuffer[primitiveIndex].x;
     metaInfo.resolution = _MeshColors_MetaBuffer[primitiveIndex].y;
     return metaInfo;
+}
+
+MeshColors_AdjacencyInfo MeshColors_LoadAdjacencyInfo(uint primitiveIndex)
+{
+    MeshColors_AdjacencyInfo adjacencyInfo;
+    adjacencyInfo.TriangleIndices = _MeshColors_AdjacencyInfoBuffer.Load3(primitiveIndex * 24);
+    adjacencyInfo.LocalEdgeIndices = _MeshColors_AdjacencyInfoBuffer.Load3(primitiveIndex * 24 + 12);
+    return adjacencyInfo;
 }
 
 uint3 MeshColors_B(float3 bary, uint resolution)
@@ -80,6 +95,11 @@ float4 MeshColors_Sample(uint primitiveIndex, float3 bary)
 #endif
 
     return col;
+}
+
+float4 MeshColors_SampleAcrossTriangles(uint primitiveIndex, float3 bary, float2 offsetDir, float dist)
+{
+    return 0.0f;
 }
 
 #endif // MESH_COLORS_CGINC

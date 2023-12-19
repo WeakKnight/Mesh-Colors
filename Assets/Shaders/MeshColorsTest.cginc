@@ -48,7 +48,7 @@ float3 sRGBToLinear(float3 srgb)
         sRGBToLinear(srgb.z));
 }
 
-float4 frag(v2f vertexInput, uint primitiveIndex: SV_PrimitiveID, float3 vBaryWeights: SV_Barycentrics) : SV_Target
+float4 frag(v2f vertexInput, uint primitiveIndex: SV_PrimitiveID, centroid float3 vBaryWeights: SV_Barycentrics) : SV_Target
 {
     MeshColors_MetaInfo metaInfo = MeshColors_LoadMetaInfo(primitiveIndex);
     

@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Unity.Collections;
@@ -8,6 +7,13 @@ using UnityEngine;
 
 public class MeshColors : IDisposable
 {
+    [StructLayout(LayoutKind.Sequential)]
+    public struct MetaInfo
+    {
+        public uint address;
+        public uint resolution;
+    }
+
     public MeshColors(Transform transform, Mesh mesh, float colorsPerUnit = 64.0f)
     {
         SharedMesh = mesh;
@@ -51,6 +57,171 @@ public class MeshColors : IDisposable
         PropertyBlock = new();
         PropertyBlock.SetBuffer(Props.MeshColors_PatchBuffer, PatchBuffer);
         PropertyBlock.SetBuffer(Props.MeshColors_MetaBuffer, MetaBuffer);
+
+        AdjacencyMapBuffer = new ComputeBuffer(triCount, 6 * 4, ComputeBufferType.Structured | ComputeBufferType.Raw, ComputeBufferMode.SubUpdates);
+        AdjacencyMapBuffer.name = "Mesh Colors Adjacency Map Buffer";
+    }
+
+    class Edge
+    {
+        public uint BeginIndex;
+        public uint EndIndex;
+
+        public uint LocalEdgeIndex;
+        public uint TriangleIndex;
+
+        public Edge(uint begin, uint end)
+        {
+            BeginIndex = begin;
+            EndIndex = end;
+        }
+
+        public Edge Reverse()
+        {
+            Edge edge = new Edge(EndIndex, BeginIndex);
+            edge.LocalEdgeIndex = LocalEdgeIndex;
+            edge.TriangleIndex = TriangleIndex;
+            return edge;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is Edge other)
+            {
+                return other.BeginIndex == BeginIndex 
+                    && other.EndIndex == EndIndex 
+                    && other.LocalEdgeIndex == LocalEdgeIndex
+                    && other.TriangleIndex == TriangleIndex;
+            }
+
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            Hash128 hash128 = new Hash128();
+            hash128.Append(BeginIndex);
+            hash128.Append(EndIndex);
+            hash128.Append(LocalEdgeIndex);
+            return hash128.GetHashCode();
+        }
+    }
+
+    class DoubleEdge
+    {
+        public Edge edge0;
+        public Edge edge1;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    struct AdjacencyInfo
+    {
+        public uint3 TriangleIndices;
+        public uint3 LocalEdgeIndices;
+    }
+
+    public void GenerateAdjacencyMap()
+    {
+        Dictionary<int, DoubleEdge> doubleEdgePairs = new();
+
+        int[] triangles = SharedMesh.triangles;
+        int triangleCount = triangles.Length / 3;
+        
+        NativeArray<AdjacencyInfo> adjacencyInfos = AdjacencyMapBuffer.BeginWrite<AdjacencyInfo>(0, triangleCount);
+
+        for (int triIndex = 0; triIndex < triangleCount; triIndex++)
+        {
+            uint A = (uint)triangles[triIndex * 3 + 0];
+            uint B = (uint)triangles[triIndex * 3 + 1];
+            uint C = (uint)triangles[triIndex * 3 + 2];
+
+            Edge[] edges = { new Edge(A, C), new Edge(A, B), new Edge(B, C) };
+
+            for (int edgeIndex = 0; edgeIndex < 3; edgeIndex++)
+            {
+                Edge edge = edges[edgeIndex];
+                edge.TriangleIndex = (uint)triIndex;
+                edge.LocalEdgeIndex = (uint)edgeIndex;
+
+                int edgeHash = edge.GetHashCode();
+                int edgeReverseHash = edge.Reverse().GetHashCode();
+
+                if (!doubleEdgePairs.ContainsKey(edgeHash) && !doubleEdgePairs.ContainsKey(edgeReverseHash))
+                {
+                    DoubleEdge doubleEdge = new DoubleEdge();
+                    doubleEdge.edge0 = edge;
+                    doubleEdge.edge1 = null;
+
+                    doubleEdgePairs.Add(edgeHash, doubleEdge);
+                }
+                else if (doubleEdgePairs.ContainsKey(edgeHash))
+                {
+                    DoubleEdge doubleEdge = doubleEdgePairs[edgeHash];
+                    doubleEdge.edge1 = edge;
+                }
+                else if (doubleEdgePairs.ContainsKey(edgeReverseHash))
+                {
+                    DoubleEdge doubleEdge = doubleEdgePairs[edgeReverseHash];
+                    doubleEdge.edge1 = edge;
+                }
+            }
+        }
+
+        for (int triIndex = 0; triIndex < triangleCount; triIndex++)
+        {
+            AdjacencyInfo adjacencyInfo = new AdjacencyInfo();
+
+            uint A = (uint)triangles[triIndex * 3 + 0];
+            uint B = (uint)triangles[triIndex * 3 + 1];
+            uint C = (uint)triangles[triIndex * 3 + 2];
+
+            Edge[] edges = { new Edge(A, C), new Edge(A, B), new Edge(B, C) };
+
+            for (int edgeIndex = 0; edgeIndex < 3; edgeIndex++)
+            {
+                Edge edge = edges[edgeIndex];
+                edge.LocalEdgeIndex = (uint)edgeIndex;
+
+                int edgeHash = edge.GetHashCode();
+                int edgeReverseHash = edge.Reverse().GetHashCode();
+
+                if (doubleEdgePairs.ContainsKey(edgeHash))
+                {
+                    DoubleEdge doubleEdge = doubleEdgePairs[edgeHash];
+                    if (doubleEdge.edge0 != edge && doubleEdge.edge0 != null)
+                    {
+                        adjacencyInfo.TriangleIndices[edgeIndex] = doubleEdge.edge0.TriangleIndex;
+                        adjacencyInfo.LocalEdgeIndices[edgeIndex] = doubleEdge.edge0.LocalEdgeIndex;
+                    }
+                    else if (doubleEdge.edge1 != edge && doubleEdge.edge1 != null)
+                    {
+                        adjacencyInfo.TriangleIndices[edgeIndex] = doubleEdge.edge1.TriangleIndex;
+                        adjacencyInfo.LocalEdgeIndices[edgeIndex] = doubleEdge.edge1.LocalEdgeIndex;
+                    }
+                }
+                else if (doubleEdgePairs.ContainsKey(edgeReverseHash))
+                {
+                    DoubleEdge doubleEdge = doubleEdgePairs[edgeReverseHash];
+                    if (doubleEdge.edge0 != edge && doubleEdge.edge0 != null)
+                    {
+                        adjacencyInfo.TriangleIndices[edgeIndex] = doubleEdge.edge0.TriangleIndex;
+                        adjacencyInfo.LocalEdgeIndices[edgeIndex] = doubleEdge.edge0.LocalEdgeIndex;
+                    }
+                    else if (doubleEdge.edge1 != edge && doubleEdge.edge1 != null)
+                    {
+                        adjacencyInfo.TriangleIndices[edgeIndex] = doubleEdge.edge1.TriangleIndex;
+                        adjacencyInfo.LocalEdgeIndices[edgeIndex] = doubleEdge.edge1.LocalEdgeIndex;
+                    }
+                }
+                else
+                {
+                    adjacencyInfo.TriangleIndices = new uint3(~0u);
+                    adjacencyInfo.LocalEdgeIndices = new uint3(~0u);
+                }
+            }
+        }
+
+        AdjacencyMapBuffer.EndWrite<AdjacencyInfo>(triangleCount);
     }
 
     public void ReadDataFromTexture(Texture2D texture)
@@ -93,13 +264,6 @@ public class MeshColors : IDisposable
             }
         }
         PatchBuffer.EndWrite<Color32>(PatchBuffer.count);
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    struct MetaInfo
-    {
-        public uint address;
-        public uint resolution;
     }
 
     int CeilToNextPowerOfTwo(int x)
@@ -158,6 +322,7 @@ public class MeshColors : IDisposable
     public MaterialPropertyBlock PropertyBlock;
     public ComputeBuffer PatchBuffer;
     public ComputeBuffer MetaBuffer;
+    public ComputeBuffer AdjacencyMapBuffer;
 
     static class Props
     {
