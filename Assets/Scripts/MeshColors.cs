@@ -135,7 +135,7 @@ public class MeshColors : IDisposable
             uint B = (uint)triangles[triIndex * 3 + 1];
             uint C = (uint)triangles[triIndex * 3 + 2];
 
-            Edge[] edges = { new Edge(A, C), new Edge(A, B), new Edge(B, C) };
+            Edge[] edges = { new Edge(A, B), new Edge(B, C), new Edge(A, C) };
 
             for (int edgeIndex = 0; edgeIndex < 3; edgeIndex++)
             {
@@ -157,12 +157,18 @@ public class MeshColors : IDisposable
                 else if (doubleEdgePairs.ContainsKey(edgeHash))
                 {
                     DoubleEdge doubleEdge = doubleEdgePairs[edgeHash];
-                    doubleEdge.edge1 = edge;
+                    if (!doubleEdge.edge0.Equals(edge))
+                    {
+                        doubleEdge.edge1 = edge;
+                    }
                 }
                 else if (doubleEdgePairs.ContainsKey(edgeReverseHash))
                 {
                     DoubleEdge doubleEdge = doubleEdgePairs[edgeReverseHash];
-                    doubleEdge.edge1 = edge;
+                    if (!doubleEdge.edge0.Equals(edge))
+                    {
+                        doubleEdge.edge1 = edge;
+                    }
                 }
             }
         }
@@ -219,6 +225,8 @@ public class MeshColors : IDisposable
                     adjacencyInfo.LocalEdgeIndices = new uint3(~0u);
                 }
             }
+
+            adjacencyInfos[triIndex] = adjacencyInfo;
         }
 
         AdjacencyMapBuffer.EndWrite<AdjacencyInfo>(triangleCount);
@@ -255,9 +263,11 @@ public class MeshColors : IDisposable
                 for (uint j = 0; j <= metaInfo.resolution - i; j++)
                 {
                     float3 bary = P((int)i, (int)j, (int)metaInfo.resolution);
+
                     float2 uv = uvA * bary.x + uvB * bary.y + uvC * bary.z;
                     int pixelX = (int)(uv.x * texture.width);
                     int pixelY = (int)(uv.y * texture.height);
+
                     pathColors[pathColorIndex] = texture.GetPixel(pixelX, pixelY);
                     pathColorIndex++;
                 }
@@ -284,7 +294,7 @@ public class MeshColors : IDisposable
         return x + 1;
     }
 
-    int ColorsPerVertex(int resolution)
+    int ColorsPerVertex()
     {
         return 1;
     }
@@ -301,7 +311,7 @@ public class MeshColors : IDisposable
 
     int ColorsPerPatch(int resolution)
     {
-        return 3 * ColorsPerVertex(resolution) + 3 * ColorsPerEdge(resolution) + ColorsPerFace(resolution);
+        return 3 * ColorsPerVertex() + 3 * ColorsPerEdge(resolution) + ColorsPerFace(resolution);
     }
 
     float3 P(int i, int j, int resolution)
@@ -316,6 +326,7 @@ public class MeshColors : IDisposable
     {
         PatchBuffer.Release();
         MetaBuffer.Release();
+        AdjacencyMapBuffer.Release();
     }
 
     public Mesh SharedMesh;

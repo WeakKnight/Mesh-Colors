@@ -27,6 +27,7 @@ public class MeshColorsRendererData : MonoBehaviour
         }
         meshColors = new MeshColors(transform, mf.sharedMesh, 256);
         meshColors.ReadDataFromTexture(testTexture);
+        meshColors.GenerateAdjacencyMap();
 
         MeshRenderer mr = GetComponent<MeshRenderer>();
         mr.SetPropertyBlock(meshColors.PropertyBlock);

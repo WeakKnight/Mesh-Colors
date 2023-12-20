@@ -62,7 +62,6 @@ float4 MeshColors_C(uint i, uint j, uint resolution, uint baseAddress)
 {
     uint offset = i * ((resolution + 1) + (resolution + 2 - i)) / 2;
     uint address = baseAddress + offset + j;
-
     return MeshColors_UnpackR8G8B8A8ToUFLOAT(_MeshColors_PatchBuffer[address]);
 }
 
@@ -97,8 +96,14 @@ float4 MeshColors_Sample(uint primitiveIndex, float3 bary)
     return col;
 }
 
-float4 MeshColors_SampleAcrossTriangles(uint primitiveIndex, float3 bary, float2 offsetDir, float dist)
+float4 MeshColors_SampleAcrossTriangles(uint primitiveIndex, float2 origin, float2 dir, float t)
 {
+    // intersect with the nearest boundary
+
+    // dist is smaller than the distance to the nearest neighbor, stop inside triangle
+
+    // dist is bigger than the distance to the nearest neighbor, reduce the distance and move to the next triangle
+
     return 0.0f;
 }
 
