@@ -1,5 +1,5 @@
-#ifndef MESH_COLOR_TEST_CGINC
-#define MESH_COLOR_TEST_CGINC
+#ifndef FORWARD_SHADING_CGINC
+#define FORWARD_SHADING_CGINC
 
 #include "UnityCG.cginc"
 #include "MeshColors.cginc"
@@ -62,4 +62,4 @@ float4 frag(v2f vertexInput, uint primitiveIndex: SV_PrimitiveID, centroid float
     return col;
 }
 
-#endif // MESH_COLOR_TEST_CGINC
+#endif // FORWARD_SHADING_CGINC

@@ -1,4 +1,4 @@
-Shader "Unlit/MeshColorsTest"
+Shader "Reyes/Principled"
 {
     Properties
     {
@@ -10,6 +10,11 @@ Shader "Unlit/MeshColorsTest"
 
         Pass
         {
+            Tags
+            {
+                "LightMode" = "ForwardShading"
+            }
+
             CGPROGRAM
             #pragma use_dxc
             #pragma require barycentrics
@@ -18,7 +23,7 @@ Shader "Unlit/MeshColorsTest"
             #pragma vertex vert
             #pragma fragment frag
 
-            #include "MeshColorsTest.cginc"
+            #include "ForwardShading.cginc"
 
             ENDCG
         }
