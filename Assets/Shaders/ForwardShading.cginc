@@ -50,12 +50,6 @@ float3 sRGBToLinear(float3 srgb)
 
 float4 frag(v2f vertexInput, uint primitiveIndex: SV_PrimitiveID, centroid float3 vBaryWeights: SV_Barycentrics) : SV_Target
 {
-    MeshColors_MetaInfo metaInfo = MeshColors_LoadMetaInfo(primitiveIndex);
-    
-    uint2 ij = MeshColors_B(vBaryWeights, metaInfo.resolution).xy;
-    uint i = ij.x;
-    uint j = ij.y;
-
     float4 col = MeshColors_Sample(primitiveIndex, vBaryWeights);
     col.xyz = sRGBToLinear(col.xyz);
 

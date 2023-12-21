@@ -2,6 +2,7 @@
 #define PRE_Z_CGINC
 
 #include "UnityCG.cginc"
+#include "VirtualMeshColors.cginc"
 
 struct v2f
 {
