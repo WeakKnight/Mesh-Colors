@@ -9,6 +9,14 @@ bitmask: 32 bit, each bit represent occupancy of 1 chunk
 */
 RWByteAddressBuffer VMC_OccupancyBuffer : u4;
 
+struct VirtualMeshColorsDesc
+{
+    uint address;
+};
+
+StructuredBuffer<VirtualMeshColorsDesc> VMC_DescBuffer;
+StructuredBuffer<MeshColors_MetaInfo> VMC_MetaBuffer;
+
 struct VirtualMeshColors
 {
     static const uint ChunkSize = 64;
